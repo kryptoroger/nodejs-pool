@@ -1,41 +1,3 @@
-SUPER IMPORTANT UPDATE UNTIL THIS UPDATE DISAPPEARS
-===================================================
-None of the following applies if you installed the pool AFTER June 2nd 2017, as the installers will do this work for you.
-
-The pool currently uses a version of LMDB that is not supported in Ubuntu 16.04 at this time.  Please run: bash deployment/install_lmdb_tools.sh once from the root of the installation to load the LMDB tools, this will put them somewhere handy on your path, and drop a new alias to them so they can be used to introspect your database.
-
-If you had installed the pool prior to 6/2/2017, PLEASE make sure you run a npm install before you restart services.
-
-Pool Design/Theory
-==================
-The nodejs-pool is built around a small series of core daemons that share access to a single LMDB table for tracking of shares, with MySQL being used to centralize configurations and ensure simple access from local/remote nodes.  The core daemons follow:
-```text
-api - Main API for the frontend to use and pull data from.  Expects to be hosted at  /
-remoteShare - Main API for consuming shares from remote/local pools.  Expects to be hosted at /leafApi
-pool - Where the miners connect to.
-longRunner - Database share cleanup.
-payments - Handles all payments to workers.
-blockManager - Unlocks blocks and distributes payments into MySQL
-worker - Does regular processing of statistics and sends status e-mails for non-active miners.
-```
-API listens on port 8001, remoteShare listens on 8000
-
-Xmrpool.net (The refrence implementation) uses the following setup:  
-* https://xmrpool.net is hosted on it's own server, as the main website is a static frontend
-* https://api.xmrpool.net hosts api, remoteShare, longRunner, payments, blockManager, worker, as these must all be hosted with access to the same LMDB database.
-
-Sample Caddyfile for API:
-```text
-https://api.xmrpool.net {
-    proxy /leafApi 127.0.0.1:8000
-    proxy / 127.0.0.1:8001
-    cors
-    gzip
-}
-```
-
-It is critically important that your webserver does not truncate the `/leafApi` portion of the URL for the remoteShare daemon, or it will not function!  Local pool servers DO use the remoteShare daemon, as this provides a buffer in case of an error with LMDB or another bug within the system, allowing shares and blocks to queue for submission as soon as the leafApi/remoteShare daemons are back up and responding with 200's.
-
 Setup Instructions
 ==================
 
@@ -259,6 +221,36 @@ If you'd like assistance with setting up node-cryptonote-pool, please provide wh
 Assistance is not available for frontend customization at this time.
 
 For assitance, please contact Snipa at pool_install@snipanet.com or via IRC at irc.freenode.net in the #monero-pools channel.
+
+Pool Design/Theory
+==================
+The nodejs-pool is built around a small series of core daemons that share access to a single LMDB table for tracking of shares, with MySQL being used to centralize configurations and ensure simple access from local/remote nodes.  The core daemons follow:
+```text
+api - Main API for the frontend to use and pull data from.  Expects to be hosted at  /
+remoteShare - Main API for consuming shares from remote/local pools.  Expects to be hosted at /leafApi
+pool - Where the miners connect to.
+longRunner - Database share cleanup.
+payments - Handles all payments to workers.
+blockManager - Unlocks blocks and distributes payments into MySQL
+worker - Does regular processing of statistics and sends status e-mails for non-active miners.
+```
+API listens on port 8001, remoteShare listens on 8000
+
+Xmrpool.net (The refrence implementation) uses the following setup:  
+* https://xmrpool.net is hosted on it's own server, as the main website is a static frontend
+* https://api.xmrpool.net hosts api, remoteShare, longRunner, payments, blockManager, worker, as these must all be hosted with access to the same LMDB database.
+
+Sample Caddyfile for API:
+```text
+https://api.xmrpool.net {
+    proxy /leafApi 127.0.0.1:8000
+    proxy / 127.0.0.1:8001
+    cors
+    gzip
+}
+```
+
+It is critically important that your webserver does not truncate the `/leafApi` portion of the URL for the remoteShare daemon, or it will not function!  Local pool servers DO use the remoteShare daemon, as this provides a buffer in case of an error with LMDB or another bug within the system, allowing shares and blocks to queue for submission as soon as the leafApi/remoteShare daemons are back up and responding with 200's.
 
 Developer Donations
 ===================
